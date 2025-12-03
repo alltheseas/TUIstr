@@ -2,18 +2,11 @@ package utils
 
 import (
 	"fmt"
+	"time"
 )
 
-func NormalizeSubreddit(subreddit string) string {
-	if subreddit == "reddit.com" {
-		return subreddit
-	}
-
-	if len(subreddit) >= 2 && subreddit[:2] == "r/" {
-		return subreddit
-	}
-
-	return fmt.Sprintf("r/%s", subreddit)
+func NormalizeCommunity(community string) string {
+	return community
 }
 
 func TruncateString(s string, w int) string {
@@ -42,4 +35,32 @@ func GetSingularPlural(s, singular, plural string) string {
 	}
 
 	return fmt.Sprintf("%s %s", s, plural)
+}
+
+func FriendlyTime(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+
+	diff := time.Since(t)
+	switch {
+	case diff < time.Minute:
+		return "just now"
+	case diff < time.Hour:
+		return fmt.Sprintf("%dm ago", int(diff.Minutes()))
+	case diff < 24*time.Hour:
+		return fmt.Sprintf("%dh ago", int(diff.Hours()))
+	case diff < 7*24*time.Hour:
+		return fmt.Sprintf("%dd ago", int(diff.Hours()/24))
+	default:
+		return t.Format("2006-01-02")
+	}
+}
+
+func ShortenPubKey(pk string) string {
+	if len(pk) <= 10 {
+		return pk
+	}
+
+	return fmt.Sprintf("%s...%s", pk[:6], pk[len(pk)-4:])
 }

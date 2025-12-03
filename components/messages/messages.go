@@ -12,12 +12,11 @@ type ErrorModalMsg struct {
 }
 
 type (
-	CleanCacheMsg      struct{}
 	GoBackMsg          struct{}
-	LoadCommentsMsg    string
+	LoadThreadMsg      model.Post
 	LoadHomeMsg        struct{}
 	LoadMorePostsMsg   bool
-	LoadSubredditMsg   string
+	LoadCommunityMsg   string
 	UpdateCommentsMsg  model.Comments
 	UpdatePostsMsg     model.Posts
 	AddMorePostsMsg    model.Posts
@@ -31,10 +30,6 @@ type (
 
 	OpenUrlMsg string
 )
-
-func CleanCache() tea.Msg {
-	return CleanCacheMsg{}
-}
 
 func GoBack() tea.Msg {
 	return GoBackMsg{}
@@ -50,15 +45,15 @@ func LoadMorePosts(home bool) tea.Cmd {
 	}
 }
 
-func LoadSubreddit(subreddit string) tea.Cmd {
+func LoadCommunity(community string) tea.Cmd {
 	return func() tea.Msg {
-		return LoadSubredditMsg(subreddit)
+		return LoadCommunityMsg(community)
 	}
 }
 
-func LoadComments(url string) tea.Cmd {
+func LoadThread(post model.Post) tea.Cmd {
 	return func() tea.Msg {
-		return LoadCommentsMsg(url)
+		return LoadThreadMsg(post)
 	}
 }
 

@@ -8,11 +8,11 @@ test:
 
 clean:
   rm -rf build/
-  rm -rf ~/.cache/reddittui/*
-  rm -rf ~/.local/state/reddittui/*
+  rm -rf ~/.cache/communities-tui/*
+  rm -rf ~/.local/state/communities-tui/*
 
 build:
-  @echo "Building reddittui..."
+  @echo "Building communities-tui..."
 
   @echo "Creating build directory at build/..."
   mkdir -p build
@@ -20,17 +20,17 @@ build:
   @echo "Installing dependencies..."
   go mod tidy
 
-  @echo "Building reddittui application..."
-  go build -o build/reddittui main.go
+  @echo "Building communities-tui application..."
+  go build -o build/communities-tui main.go
 
   @echo "Build complete."
 
 install: build
-  @echo "Installing reddittui..."
+  @echo "Installing communities-tui..."
   ./install.sh
   @echo "Installation complete."
 
 uninstall: clean
-  @echo "Cleaning reddittui..."
-  sudo rm -f /usr/local/bin/reddittui
+  @echo "Cleaning communities-tui..."
+  sudo rm -f /usr/local/bin/communities-tui
   @echo "Clean complete"

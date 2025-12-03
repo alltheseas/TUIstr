@@ -27,7 +27,7 @@ var modalStyle = lipgloss.NewStyle().
 
 type ModalManager struct {
 	quit       QuitModal
-	search     SubredditSearchModal
+	search     CommunitySearchModal
 	spinner    SpinnerModal
 	errorModal ErrorModal
 	state      SessionState
@@ -38,7 +38,7 @@ type ModalManager struct {
 func NewModalManager() ModalManager {
 	return ModalManager{
 		quit:       NewQuitModal(),
-		search:     NewSubredditSearchModal(),
+		search:     NewCommunitySearchModal(),
 		spinner:    NewSpinnerModal(),
 		errorModal: NewErrorModal(),
 		style:      modalStyle,

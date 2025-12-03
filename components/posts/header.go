@@ -46,6 +46,6 @@ func (h PostsHeader) View() string {
 }
 
 func (h *PostsHeader) SetContent(title, desc string) {
-	h.Title = utils.NormalizeSubreddit(title)
+	h.Title = utils.NormalizeCommunity(title)
 	h.Description = desc
 }

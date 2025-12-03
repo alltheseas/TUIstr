@@ -10,49 +10,43 @@ import (
 )
 
 const (
-	configFilename    = "reddittui.toml"
-	defaultDomainName = "old.reddit.com"
-	defaultServerType = "old"
+	configFilename = "communities.toml"
 )
 
 type Config struct {
-	Core   CoreConfig   `toml:"core"`
-	Filter FilterConfig `toml:"filter"`
-	Client ClientConfig `toml:"client"`
-	Server ServerConfig `toml:"server"`
+	Core        CoreConfig        `toml:"core"`
+	Nostr       NostrConfig       `toml:"nostr"`
+	Communities CommunitiesConfig `toml:"communities"`
 }
 
 type CoreConfig struct {
-	BypassCache   bool
-	LogLevel      string
-	ClientTimeout int // Legacy
+	LogLevel string
 }
 
-type FilterConfig struct {
-	Keywords   []string
-	Subreddits []string
+type NostrConfig struct {
+	Relays         []string
+	TimeoutSeconds int
+	Limit          int
 }
 
-type ClientConfig struct {
-	TimeoutSeconds  int
-	CacheTtlSeconds int
-}
-
-type ServerConfig struct {
-	Domain string
-	Type   string
+type CommunitiesConfig struct {
+	Featured []string
+	Default  string
 }
 
 func NewConfig() Config {
 	return Config{
 		Core: CoreConfig{
-			BypassCache:   false,
-			LogLevel:      "Warn",
-			ClientTimeout: 10,
+			LogLevel: "Warn",
 		},
-		Server: ServerConfig{
-			Domain: defaultDomainName,
-			Type:   defaultServerType,
+		Nostr: NostrConfig{
+			Relays:         []string{"wss://relay.damus.io", "wss://nos.lol", "wss://relay.snort.social"},
+			TimeoutSeconds: 10,
+			Limit:          50,
+		},
+		Communities: CommunitiesConfig{
+			Featured: []string{"t:nostr", "t:bitcoin", "t:linux"},
+			Default:  "t:nostr",
 		},
 	}
 }
@@ -98,40 +92,28 @@ func LoadConfig() (Config, error) {
 
 // Merge right config into left
 func mergeConfig(left, right Config, meta toml.MetaData) Config {
-	if meta.IsDefined("core", "bypassCache") {
-		left.Core.BypassCache = right.Core.BypassCache
-	}
-
 	if meta.IsDefined("core", "logLevel") {
 		left.Core.LogLevel = right.Core.LogLevel
 	}
 
-	if meta.IsDefined("core", "clientTimeout") {
-		left.Core.ClientTimeout = right.Core.ClientTimeout
+	if meta.IsDefined("nostr", "relays") {
+		left.Nostr.Relays = right.Nostr.Relays
 	}
 
-	if meta.IsDefined("filter", "keywords") {
-		left.Filter.Keywords = right.Filter.Keywords
+	if meta.IsDefined("nostr", "timeoutSeconds") {
+		left.Nostr.TimeoutSeconds = right.Nostr.TimeoutSeconds
 	}
 
-	if meta.IsDefined("filter", "subreddits") {
-		left.Filter.Subreddits = right.Filter.Subreddits
+	if meta.IsDefined("nostr", "limit") {
+		left.Nostr.Limit = right.Nostr.Limit
 	}
 
-	if meta.IsDefined("client", "timeoutSeconds") {
-		left.Client.TimeoutSeconds = right.Client.TimeoutSeconds
+	if meta.IsDefined("communities", "featured") {
+		left.Communities.Featured = right.Communities.Featured
 	}
 
-	if meta.IsDefined("client", "cacheTtlSeconds") {
-		left.Client.CacheTtlSeconds = right.Client.CacheTtlSeconds
-	}
-
-	if meta.IsDefined("server", "domain") {
-		left.Server.Domain = right.Server.Domain
-	}
-
-	if meta.IsDefined("server", "type") {
-		left.Server.Type = right.Server.Type
+	if meta.IsDefined("communities", "default") {
+		left.Communities.Default = right.Communities.Default
 	}
 
 	return left

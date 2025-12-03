@@ -7,20 +7,20 @@ import (
 )
 
 type Post struct {
-	PostTitle     string    `json:"title"`
-	Author        string    `json:"author"`
-	Subreddit     string    `json:"subreddit"`
-	FriendlyDate  string    `json:"friendlyDate"`
-	Expiry        time.Time `json:"expiry"`
-	PostUrl       string    `json:"postUrl"`
-	CommentsUrl   string    `json:"commentsUrl"`
-	TotalComments string    `json:"totalComments"`
-	TotalLikes    string    `json:"totalLikes"`
+	ID           string
+	PostTitle    string
+	Content      string
+	Author       string
+	Community    string
+	FriendlyDate string
+	CreatedAt    time.Time
+	PostUrl      string
+	ThreadID     string
 }
 
 type Posts struct {
 	Description string
-	Subreddit   string
+	Community   string
 	IsHome      bool
 	Posts       []Post
 	After       string
@@ -28,23 +28,17 @@ type Posts struct {
 }
 
 func (p Post) Title() string {
-	return fmt.Sprintf(" %s  %s", p.TotalLikes, p.PostTitle)
+	return p.PostTitle
 }
 
 func (p Post) Description() string {
 	var sb strings.Builder
-	if strings.TrimSpace(p.Subreddit) != "" {
-		sb.WriteString(p.Subreddit)
+	if strings.TrimSpace(p.Community) != "" {
+		sb.WriteString(p.Community)
 		sb.WriteString("  ")
 	}
 
-	if strings.TrimSpace(p.TotalComments) == "" {
-		fmt.Fprintf(&sb, "%d comments  ", 0)
-	} else {
-		fmt.Fprintf(&sb, "%s comments  ", p.TotalComments)
-	}
-
-	fmt.Fprintf(&sb, "submitted %s by %s", p.FriendlyDate, p.Author)
+	fmt.Fprintf(&sb, "posted %s by %s", p.FriendlyDate, p.Author)
 	return sb.String()
 }
 

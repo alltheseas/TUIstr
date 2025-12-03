@@ -3,7 +3,6 @@ package comments
 import (
 	"fmt"
 	"reddittui/model"
-	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -119,11 +118,10 @@ func (c *CommentsViewport) SetViewportContent() {
 // Format comment, adding padding to the entry according to the comment's depth
 func (c *CommentsViewport) formatComment(comment model.Comment, i int) string {
 	var (
-		authorAndDateView          string
-		pointsView                 string
-		pointsAndCollapsedHintView string
-		paddingW                   = comment.Depth * 2
-		containerStyle             = lipgloss.NewStyle().PaddingLeft(paddingW).Width(c.w - paddingW)
+		metaView       string
+		collapsedHint  string
+		paddingW       = comment.Depth * 2
+		containerStyle = lipgloss.NewStyle().PaddingLeft(paddingW).Width(c.w - paddingW)
 	)
 
 	if c.collapsed && comment.Depth > 0 {
@@ -132,9 +130,7 @@ func (c *CommentsViewport) formatComment(comment model.Comment, i int) string {
 
 	authorView := commentAuthorStyle.Render(comment.Author)
 	dateView := commentDateStyle.Render(comment.Timestamp)
-	authorAndDateView = fmt.Sprintf("%s • %s", authorView, dateView)
-	pointsView = renderPoints(comment.Points)
-	pointsAndCollapsedHintView = pointsView
+	metaView = fmt.Sprintf("%s • %s", authorView, dateView)
 
 	if c.collapsed {
 		children := 0
@@ -147,38 +143,20 @@ func (c *CommentsViewport) formatComment(comment model.Comment, i int) string {
 		}
 
 		if children == 1 {
-			collapsedHintView := collapsedStyle.Render("(1 comment hidden)")
-			pointsAndCollapsedHintView = fmt.Sprintf("%s  %s", pointsView, collapsedHintView)
+			collapsedHint = collapsedStyle.Render("(1 reply hidden)")
 		} else if children > 1 {
-			collapsedView := collapsedStyle.Render(fmt.Sprintf("(%d comments hidden)", children))
-			pointsAndCollapsedHintView = fmt.Sprintf("%s  %s", pointsView, collapsedView)
+			collapsedHint = collapsedStyle.Render(fmt.Sprintf("(%d replies hidden)", children))
 		}
 	}
 
-	joined := lipgloss.JoinVertical(lipgloss.Left, authorAndDateView, comment.Text, pointsAndCollapsedHintView)
+	metaLine := metaView
+	if collapsedHint != "" {
+		metaLine = fmt.Sprintf("%s  %s", metaView, collapsedHint)
+	}
+
+	body := commentTextStyle.Render(comment.Text)
+	joined := lipgloss.JoinVertical(lipgloss.Left, metaLine, body)
 	return containerStyle.Render(joined)
-}
-
-func renderPoints(pointsString string) string {
-	parts := strings.Fields(pointsString)
-	if len(parts) != 2 {
-		return defaultPointsStyle.Render(pointsString)
-	}
-
-	if strings.Contains(parts[0], "-") {
-		return negativePointsStyle.Render(pointsString)
-	} else if strings.Contains(parts[0], "k") {
-		return popularPointsStyle.Render(pointsString)
-	}
-
-	points, err := strconv.Atoi(parts[0])
-	if err != nil {
-		return defaultPointsStyle.Render(pointsString)
-	} else if points >= 1000 {
-		return popularPointsStyle.Render(pointsString)
-	}
-
-	return defaultPointsStyle.Render(pointsString)
 }
 
 func (c *CommentsViewport) toggleCollapseComments() {

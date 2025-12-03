@@ -15,7 +15,7 @@ import (
 const version = "v0.3.9"
 
 type CliArgs struct {
-	subreddit   string
+	community   string
 	postId      string
 	showVersion bool
 }
@@ -31,21 +31,26 @@ func main() {
 	defer logFile.Close()
 
 	var args CliArgs
-	flag.StringVar(&args.postId, "post", "", "Post id")
-	flag.StringVar(&args.subreddit, "subreddit", "", "Subreddit")
+	flag.StringVar(&args.postId, "event", "", "Event id")
+	flag.StringVar(&args.community, "community", "", "Community identifier (NIP-73)")
 	flag.BoolVar(&args.showVersion, "version", false, "Version")
 	flag.Parse()
 
 	if args.showVersion {
-		fmt.Printf("reddittui version %s\n", version)
+		fmt.Printf("communities-tui version %s\n", version)
 		os.Exit(0)
 	}
 
-	reddit := components.NewRedditTui(configuration, args.subreddit, args.postId)
-	p := tea.NewProgram(reddit, tea.WithAltScreen())
+	communities, err := components.NewCommunitiesTui(configuration, args.community, args.postId)
+	if err != nil {
+		slog.Error("Error initializing communities tui", "error", err)
+		os.Exit(1)
+	}
+
+	p := tea.NewProgram(communities, tea.WithAltScreen())
 
 	if _, err := p.Run(); err != nil {
-		slog.Error("Error running reddittui, see logfile for details", "error", err)
+		slog.Error("Error running communities tui, see logfile for details", "error", err)
 		os.Exit(1)
 	}
 }

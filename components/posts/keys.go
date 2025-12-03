@@ -15,7 +15,7 @@ var postsKeys = postsKeyMap{
 		key.WithHelp("H", "home")),
 	Search: key.NewBinding(
 		key.WithKeys("s"),
-		key.WithHelp("s", "subreddit search")),
+		key.WithHelp("s", "community search")),
 	Back: key.NewBinding(
 		key.WithKeys("bs"),
 		key.WithHelp("bs", "back")),
