@@ -1,6 +1,8 @@
-# TUIstr (Nostr communities)
+# TUIstr (Nostr topical communities)
 
-A lightweight terminal client for browsing open Nostr communities (kind `1111` posts with NIP-73 identifiers) and their NIP-22 comment threads. Built with [Bubble Tea](https://github.com/charmbracelet/bubbletea) and powered by [go-nostr](https://github.com/nbd-wtf/go-nostr).
+A lightweight terminal client for browsing open topical Nostr communities (kind `1111` posts with NIP-73 identifiers) and their NIP-22 comment threads. Built with [Bubble Tea](https://github.com/charmbracelet/bubbletea) and powered by [go-nostr](https://github.com/nbd-wtf/go-nostr). 
+
+Open topical communities working spec: https://github.com/damus-io/dips/pull/2/files
 
 ## Features
 - Featured feed across multiple relays and community identifiers.
