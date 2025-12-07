@@ -15,6 +15,7 @@ import (
 type CommentsViewport struct {
 	viewport      viewport.Model
 	postText      string
+	postTitle     string
 	postUrl       string
 	comments      []model.Comment
 	keyMap        viewportKeyMap
@@ -70,6 +71,7 @@ func (c *CommentsViewport) SetSize(w, h int) {
 
 func (c *CommentsViewport) SetContent(comments model.Comments) {
 	c.postText = comments.PostText
+	c.postTitle = comments.PostTitle
 	c.postUrl = comments.PostUrl
 	c.comments = comments.Comments
 
@@ -89,11 +91,9 @@ func (c *CommentsViewport) ResizeComponents() {
 func (c *CommentsViewport) GetViewportView() string {
 	var content strings.Builder
 
-	if len(c.postText) > 0 {
+	// Show the post body once; if it mirrors the title, skip it to avoid duplication.
+	if strings.TrimSpace(c.postText) != "" && !sameText(c.postText, c.postTitle) {
 		content.WriteString(c.postText)
-		content.WriteString("\n")
-	} else {
-		content.WriteString(c.postUrl)
 		content.WriteString("\n\n")
 	}
 
@@ -107,6 +107,10 @@ func (c *CommentsViewport) GetViewportView() string {
 	}
 
 	return content.String()
+}
+
+func sameText(a, b string) bool {
+	return strings.TrimSpace(a) == strings.TrimSpace(b)
 }
 
 func (c *CommentsViewport) SetViewportContent() {
