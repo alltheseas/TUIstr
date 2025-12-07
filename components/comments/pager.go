@@ -2,8 +2,8 @@ package comments
 
 import (
 	"fmt"
-	"reddittui/model"
 	"strings"
+	"tuistr/model"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"

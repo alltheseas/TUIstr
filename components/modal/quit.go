@@ -2,8 +2,8 @@ package modal
 
 import (
 	"fmt"
-	"reddittui/components/colors"
-	"reddittui/components/messages"
+	"tuistr/components/colors"
+	"tuistr/components/messages"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

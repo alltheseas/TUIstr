@@ -1,7 +1,7 @@
 package messages
 
 import (
-	"reddittui/model"
+	"tuistr/model"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

@@ -1,9 +1,9 @@
 package modal
 
 import (
-	"reddittui/components/colors"
-	"reddittui/components/messages"
-	"reddittui/model"
+	"tuistr/components/colors"
+	"tuistr/components/messages"
+	"tuistr/model"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"

@@ -2,10 +2,10 @@ package comments
 
 import (
 	"log/slog"
-	"reddittui/client"
-	"reddittui/components/messages"
-	"reddittui/components/styles"
-	"reddittui/model"
+	"tuistr/client"
+	"tuistr/components/messages"
+	"tuistr/components/styles"
+	"tuistr/model"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

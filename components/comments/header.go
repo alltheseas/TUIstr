@@ -2,9 +2,9 @@ package comments
 
 import (
 	"fmt"
-	"reddittui/components/colors"
-	"reddittui/model"
-	"reddittui/utils"
+	"tuistr/components/colors"
+	"tuistr/model"
+	"tuistr/utils"
 
 	"github.com/charmbracelet/lipgloss"
 )

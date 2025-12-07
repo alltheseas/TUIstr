@@ -6,11 +6,11 @@ import (
 )
 
 const (
-	appName          = "communities-tui"
+	appName          = "tuistr"
 	defaultConfigDir = ".config"
 	defaultStateDir  = ".local/state"
 	defaultCacheDir  = ".cache"
-	logFileName      = "communities-tui.log"
+	logFileName      = "tuistr.log"
 )
 
 func GetConfigDir() (string, error) {
