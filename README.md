@@ -1,133 +1,75 @@
-# Reddittui
-A lightweight terminal application for browsing Reddit from your command line. Powered by [bubbletea](https://github.com/charmbracelet/bubbletea)
+# Communities TUI (Nostr)
+
+A lightweight terminal client for browsing open Nostr communities (kind `1111` posts with NIP-73 identifiers) and their NIP-22 comment threads. Built with [Bubble Tea](https://github.com/charmbracelet/bubbletea) and powered by [go-nostr](https://github.com/nbd-wtf/go-nostr).
 
 ## Features
-- **Subreddit Browsing:** Navigate through your favorite subreddits.
-- **Post Viewing:** Read text posts and comments.
-- **Keyboard Navigation:** Scroll and select posts using vim/standard keyboard shortcuts.
-- **Configurable**: Customize caching behavior and define subreddit filters using a configuration file
-
-## Demo
-https://github.com/user-attachments/assets/40d61ef3-3a95-4a26-8c49-bec616f6ae1c
+- Featured feed across multiple relays and community identifiers.
+- Jump directly to a specific community (`t:`, `u:`, or `g:` NIP-73 ids).
+- View comment threads (NIP-22) with nested replies.
+- Keyboard-driven navigation (vim-style) and modal search for communities.
+- Configurable relays, timeouts, and featured communities via a TOML config.
 
 ## Installation
 
-### Git
-#### Prerequisites
-- **Git**
-- **Go:** Version 1.16 or newer
-- **Terminal:** A Unix-like terminal (Linux, macOS, or similar).
-- **POSIX Utilities:** The `install` command is used for installation, which is available on both Linux and macOS.
-
-Clone the repository and run the install script: 
-
 ```bash
-git clone https://github.com/tonymajestro/reddit-tui.git reddittui
-cd reddittui
+git clone https://github.com/tonymajestro/reddit-tui.git communities-tui
+cd communities-tui/reddit-tui
 ./install.sh
 ```
 
-To remove reddittui run the uninstall script:
+To remove the binary:
 
 ```bash
 ./uninstall.sh
 ```
 
-### Arch
-Arch users can install reddittui from the AUR using yay or other AUR helpers.
-
-[Pre-compiled](https://aur.archlinux.org/packages/reddit-tui-bin) and [source packages](https://aur.archlinux.org/packages/reddit-tui) are available.
-
-```bash
-yay -S reddit-tui-bin
-```
-
-```bash
-yay -S reddit-tui
-```
-
-### Nix
-Nix users can try it in a shell or add it to their system config like this.
-```bash
-nix-shell -p reddit-tui
-```
-```nix
-  environment.systemPackages = [
-      pkgs.reddit-tui
-    ];
-```
-
 ## Usage
-Run the installed binary from your preferred terminal:
 
 ```bash
-# Open reddittui, navigating to the home page
-reddittui
+# Open the featured communities feed
+communities-tui
 
-# Open reddittui, navigating to a specific subreddit
-reddittui --subreddit dogs
+# Jump to a specific community (NIP-73 id)
+communities-tui --community t:linux
 
-# Open reddittui, navigating to a specific post by its ID
-reddittui --post 1iyuce4
+# Open a specific event by ID (kind 1111)
+communities-tui --event <event_id>
 ```
 
 ## Keybindings
-- Navigation
-  - **h, j, k, l:** Vim movement
-  - **left, right, up, down:** Normal movement
-  - **g**: Go to top of page
-  - **G**: Go to bottom of page
-  - **s**: Switch subreddits
-- Posts page
-  - **L**: Load more posts
-- Comments page
-  - **o**: Open post link in browser
-  - **c**: Collapse comments
-- Misc
-  - **H:** Go to home page
-  - **backspace**: Go back
-  - **q, esc**: Exit reddittui
+- Navigation: `h`, `j`, `k`, `l` or arrow keys
+- Jump: `g` (top), `G` (bottom)
+- Community search modal: `s`
+- Load more posts: `L`
+- Home: `H`
+- Comments: `enter` on a post, `o` to open the event in a browser
+- Collapse/expand replies: `c` while viewing a thread
+- Back: `backspace` / `esc`
+- Quit: `q` / `esc`
 
-## Configuration files
-After running the reddittui binary, the following files will be initialized:
-- Configuration file:
-  - `~/.config/reddittui/reddittui.toml`
-- Log file:
-  - `~/.local/state/reddittui.log`
-- Cache
-  - `~/.cache/reddittui/`
+## Configuration
 
-Sample configuration:
+On first run, a config is created at `~/.config/communities-tui/communities.toml`:
+
 ```toml
-# Core configuration
 [core]
-bypassCache = false
 logLevel = "Warn"
 
-# Filter out posts containing keywords or belonging to certain subreddits
-[filter]
-subreddits = ["news", "politics"]
-keywords = ["pizza", "pineapple"]
-
-# Configure client timeout and cache TTL. By default, subreddit posts and comments are cached for 1 hour.
-[client]
+[nostr]
+relays = ["wss://relay.damus.io", "wss://nos.lol", "wss://relay.snort.social"]
 timeoutSeconds = 10
-cacheTtlSeconds = 3600
+limit = 50
 
-# Configure which reddit server to use. Default is old.reddit.com but redlib servers are also supported
-[server]
-domain = "old.reddit.com"
-type = "old"
+[communities]
+# NIP-73 identifiers: topics (t:), relays (u:), geohashes (g:)
+featured = ["t:nostr", "t:bitcoin", "t:linux"]
+default = "t:nostr"
 ```
 
-## Redlib
-For enhanced privacy, private [Redlib backends](https://github.com/redlib-org/redlib) are supported. A list of Redlib servers can be found [here](https://github.com/redlib-org/redlib-instances/blob/main/instances.json). Use the following configuration to use a Redlib server instead of old.reddit.com:
+- **Featured feed**: Queries kind `1111` events tagged with any `I` value in `communities.featured`.
+- **Community page**: Queries kind `1111` events with a root `I` tag matching the selected identifier.
+- **Threads**: Fetches NIP-22 replies (kinds `1`/`1111`) referencing the root event (`e/E` tags).
 
-```toml
-[server]
-domain = "safereddit.com"
-type = "redlib"
-```
-
-## Acknowledgments
-Reddittui is based on the [bubbletea](https://github.com/charmbracelet/bubbletea) framework. It also takes inspiration from [circumflex](https://github.com/bensadeh/circumflex), a hackernews terminal browser.
+## Notes
+- No Reddit APIs or email logins remain—everything is fetched from Nostr relays via go-nostr.
+- Kind `1111` post URLs are rendered as `https://njump.me/<nevent>` for easy sharing/opening.
