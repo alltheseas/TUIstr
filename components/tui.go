@@ -14,7 +14,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-const defaultLoadingMessage = "loading reddit.com..."
+const defaultLoadingMessage = "connecting to nostr relays..."
 
 type (
 	pageType int
@@ -22,14 +22,14 @@ type (
 
 const (
 	HomePage pageType = iota
-	SubredditPage
+	CommunityPage
 	CommentsPage
 )
 
-type RedditTui struct {
-	redditClient  client.RedditClient
+type CommunitiesTui struct {
+	nostrClient   *client.NostrClient
 	homePage      posts.PostsPage
-	subredditPage posts.PostsPage
+	communityPage posts.PostsPage
 	commentsPage  comments.CommentsPage
 	modalManager  modal.ModalManager
 	popup         bool
@@ -37,49 +37,59 @@ type RedditTui struct {
 	page          pageType
 	prevPage      pageType
 	loadingPage   pageType
-	initCmd       tea.Cmd
+	startCmd      tea.Cmd
 }
 
-func NewRedditTui(configuration config.Config, subreddit, post string) RedditTui {
-	redditClient := client.NewRedditClient(configuration)
+func NewCommunitiesTui(configuration config.Config, communityArg, postID string) (CommunitiesTui, error) {
+	nostrClient, err := client.NewNostrClient(configuration)
+	if err != nil {
+		return CommunitiesTui{}, err
+	}
 
-	homePage := posts.NewPostsPage(redditClient, true)
-	subredditPage := posts.NewPostsPage(redditClient, false)
-	commentsPage := comments.NewCommentsPage(redditClient)
+	homePage := posts.NewPostsPage(nostrClient, true)
+	communityPage := posts.NewPostsPage(nostrClient, false)
+	commentsPage := comments.NewCommentsPage(nostrClient)
 
 	modalManager := modal.NewModalManager()
 
-	return RedditTui{
-		redditClient:  redditClient,
+	startCmd := initialCommand(nostrClient, configuration.Communities, communityArg, postID)
+
+	return CommunitiesTui{
+		nostrClient:   nostrClient,
 		homePage:      homePage,
-		subredditPage: subredditPage,
+		communityPage: communityPage,
 		commentsPage:  commentsPage,
 		modalManager:  modalManager,
 		initializing:  true,
-		initCmd:       getInitCmd(redditClient.BaseUrl, subreddit, post),
-	}
+		startCmd:      startCmd,
+	}, nil
 }
 
-func getInitCmd(baseUrl, subreddit, post string) tea.Cmd {
-	if len(subreddit) != 0 {
-		return messages.LoadSubreddit(subreddit)
-	} else if len(post) != 0 {
-		url, err := client.GetPostUrl(baseUrl, post)
-		if err != nil {
-			panic(fmt.Sprintf("Could not load post %s: %v", post, err))
+func initialCommand(client *client.NostrClient, communities config.CommunitiesConfig, communityArg, postID string) tea.Cmd {
+	switch {
+	case communityArg != "":
+		return messages.LoadCommunity(communityArg)
+	case postID != "":
+		return func() tea.Msg {
+			post, err := client.GetPostByID(postID)
+			if err != nil {
+				slog.Error("Could not load event", "id", postID, "error", err)
+				return messages.ShowErrorModalMsg{ErrorMsg: fmt.Sprintf("Could not load event %s", postID)}
+			}
+			return messages.LoadThreadMsg(post)
 		}
-
-		return messages.LoadComments(url)
-	} else {
-		return tea.Batch(messages.CleanCache, messages.LoadHome)
+	case communities.Default != "":
+		return messages.LoadCommunity(communities.Default)
+	default:
+		return messages.LoadHome
 	}
 }
 
-func (r RedditTui) Init() tea.Cmd {
-	return messages.LoadHome
+func (r CommunitiesTui) Init() tea.Cmd {
+	return r.startCmd
 }
 
-func (r RedditTui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (r CommunitiesTui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		cmds []tea.Cmd
 		cmd  tea.Cmd
@@ -90,23 +100,19 @@ func (r RedditTui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if r.initializing && msg.OnClose == nil {
 			slog.Error("Error during initialization")
 			if r.loadingPage == HomePage {
-				errorMsg := "Could not initialize reddittui. Check the logfile for details."
+				errorMsg := "Could not initialize communities tui. Check the logfile for details."
 				return r, messages.ShowErrorModalWithCallback(errorMsg, tea.Quit)
 			}
 
 			var errorMsg string
-			if r.loadingPage == SubredditPage {
-				errorMsg = "Error loading subreddit. Returning to home page..."
+			if r.loadingPage == CommunityPage {
+				errorMsg = "Error loading community. Returning to home page..."
 			} else {
-				errorMsg = "Error loading post. Returning to home page..."
+				errorMsg = "Error loading thread. Returning to home page..."
 			}
 
 			return r, messages.ShowErrorModalWithCallback(errorMsg, messages.LoadHome)
 		}
-
-	case messages.CleanCacheMsg:
-		r.redditClient.CleanCache()
-		return r, nil
 
 	case messages.OpenModalMsg:
 		r.focusModal()
@@ -137,12 +143,12 @@ func (r RedditTui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd = r.modalManager.SetLoading(defaultLoadingMessage)
 		cmds = append(cmds, cmd)
 
-	case messages.LoadSubredditMsg:
-		subreddit := string(msg)
+	case messages.LoadCommunityMsg:
+		community := string(msg)
 		r.focusModal()
-		r.loadingPage = SubredditPage
+		r.loadingPage = CommunityPage
 
-		loadingMsg := fmt.Sprintf("loading %s...", utils.NormalizeSubreddit(subreddit))
+		loadingMsg := fmt.Sprintf("loading %s...", utils.NormalizeCommunity(community))
 		cmd = r.modalManager.SetLoading(loadingMsg)
 		cmds = append(cmds, cmd)
 
@@ -153,11 +159,11 @@ func (r RedditTui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd = r.modalManager.SetLoading("loading posts...")
 		cmds = append(cmds, cmd)
 
-	case messages.LoadCommentsMsg:
+	case messages.LoadThreadMsg:
 		r.focusModal()
 		r.loadingPage = CommentsPage
 
-		cmd = r.modalManager.SetLoading("loading comments...")
+		cmd = r.modalManager.SetLoading("loading thread...")
 		cmds = append(cmds, cmd)
 
 	case messages.OpenUrlMsg:
@@ -170,7 +176,7 @@ func (r RedditTui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		r.homePage.SetSize(msg.Width, msg.Height)
-		r.subredditPage.SetSize(msg.Width, msg.Height)
+		r.communityPage.SetSize(msg.Width, msg.Height)
 		r.commentsPage.SetSize(msg.Width, msg.Height)
 		r.modalManager.SetSize(msg.Width, msg.Height)
 
@@ -187,7 +193,7 @@ func (r RedditTui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	r.homePage, cmd = r.homePage.Update(msg)
 	cmds = append(cmds, cmd)
 
-	r.subredditPage, cmd = r.subredditPage.Update(msg)
+	r.communityPage, cmd = r.communityPage.Update(msg)
 	cmds = append(cmds, cmd)
 
 	r.commentsPage, cmd = r.commentsPage.Update(msg)
@@ -196,13 +202,13 @@ func (r RedditTui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return r, tea.Batch(cmds...)
 }
 
-func (r RedditTui) View() string {
+func (r CommunitiesTui) View() string {
 	if r.popup {
 		switch r.page {
 		case HomePage:
 			return r.modalManager.View(r.homePage)
-		case SubredditPage:
-			return r.modalManager.View(r.subredditPage)
+		case CommunityPage:
+			return r.modalManager.View(r.communityPage)
 		case CommentsPage:
 			return r.modalManager.View(r.commentsPage)
 		}
@@ -211,8 +217,8 @@ func (r RedditTui) View() string {
 	switch r.page {
 	case HomePage:
 		return r.homePage.View()
-	case SubredditPage:
-		return r.subredditPage.View()
+	case CommunityPage:
+		return r.communityPage.View()
 	case CommentsPage:
 		return r.commentsPage.View()
 	}
@@ -220,13 +226,13 @@ func (r RedditTui) View() string {
 	return ""
 }
 
-func (r *RedditTui) goBack() {
+func (r *CommunitiesTui) goBack() {
 	switch r.page {
 	case CommentsPage:
 		if r.prevPage == HomePage {
 			r.setPage(HomePage)
 		} else {
-			r.setPage(SubredditPage)
+			r.setPage(CommunityPage)
 		}
 	default:
 		r.setPage(HomePage)
@@ -235,46 +241,39 @@ func (r *RedditTui) goBack() {
 	r.focusActivePage()
 }
 
-func (r *RedditTui) setPage(page pageType) {
+func (r *CommunitiesTui) setPage(page pageType) {
 	r.page, r.prevPage = page, r.page
 }
 
-func (r *RedditTui) completeLoading() tea.Cmd {
-	initializing := r.initializing
-
+func (r *CommunitiesTui) completeLoading() tea.Cmd {
 	r.initializing = false
 	r.popup = false
 	r.setPage(r.loadingPage)
 	r.focusActivePage()
 
-	if initializing {
-		r.initializing = false
-		return r.initCmd
-	}
-
 	return r.modalManager.Blur()
 }
 
-func (r *RedditTui) focusModal() {
+func (r *CommunitiesTui) focusModal() {
 	r.popup = true
 	r.homePage.Blur()
-	r.subredditPage.Blur()
+	r.communityPage.Blur()
 	r.commentsPage.Blur()
 }
 
-func (r *RedditTui) focusActivePage() {
+func (r *CommunitiesTui) focusActivePage() {
 	switch r.page {
 	case HomePage:
 		r.homePage.Focus()
-		r.subredditPage.Blur()
+		r.communityPage.Blur()
 		r.commentsPage.Blur()
-	case SubredditPage:
+	case CommunityPage:
 		r.homePage.Blur()
-		r.subredditPage.Focus()
+		r.communityPage.Focus()
 		r.commentsPage.Blur()
 	case CommentsPage:
 		r.homePage.Blur()
-		r.subredditPage.Blur()
+		r.communityPage.Blur()
 		r.commentsPage.Focus()
 	}
 }

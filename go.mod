@@ -1,11 +1,12 @@
 module reddittui
 
-go 1.23.4
+go 1.24.0
 
 require (
 	github.com/charmbracelet/bubbletea v1.2.4
 	github.com/charmbracelet/x/exp/teatest v0.0.0-20250303111204-ce812b082f54
 	github.com/muesli/reflow v0.3.0
+	github.com/nbd-wtf/go-nostr v0.52.3
 	golang.org/x/net v0.39.0
 )
 
@@ -39,3 +40,5 @@ require (
 	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
 )
+
+replace github.com/nbd-wtf/go-nostr => ../go-nostr

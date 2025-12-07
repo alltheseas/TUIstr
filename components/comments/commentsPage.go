@@ -11,10 +11,10 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var commentsErrorText = "Could not load comments. Please try again in a few moments."
+var commentsErrorText = "Could not load thread. Please try again in a few moments."
 
 type CommentsPage struct {
-	redditClient   client.RedditClient
+	nostrClient    *client.NostrClient
 	header         CommentsHeader
 	pager          CommentsViewport
 	containerStyle lipgloss.Style
@@ -22,12 +22,12 @@ type CommentsPage struct {
 	focus          bool
 }
 
-func NewCommentsPage(redditClient client.RedditClient) CommentsPage {
+func NewCommentsPage(nostrClient *client.NostrClient) CommentsPage {
 	header := NewCommentsHeader()
 	vp := NewCommentsViewport()
 
 	return CommentsPage{
-		redditClient:   redditClient,
+		nostrClient:    nostrClient,
 		header:         header,
 		pager:          vp,
 		containerStyle: styles.GlobalStyle,
@@ -55,9 +55,9 @@ func (c CommentsPage) Update(msg tea.Msg) (CommentsPage, tea.Cmd) {
 
 func (c CommentsPage) handleGlobalMessages(msg tea.Msg) (CommentsPage, tea.Cmd) {
 	switch msg := msg.(type) {
-	case messages.LoadCommentsMsg:
-		url := string(msg)
-		return c, c.loadComments(url)
+	case messages.LoadThreadMsg:
+		post := model.Post(msg)
+		return c, c.loadThread(post)
 	case messages.UpdateCommentsMsg:
 		c.updateComments(model.Comments(msg))
 		return c, messages.LoadingComplete
@@ -118,9 +118,9 @@ func (c *CommentsPage) resizeComponents() {
 	c.pager.SetSize(w, pagerHeight)
 }
 
-func (c *CommentsPage) loadComments(url string) tea.Cmd {
+func (c *CommentsPage) loadThread(post model.Post) tea.Cmd {
 	return func() tea.Msg {
-		comments, err := c.redditClient.GetComments(url)
+		comments, err := c.nostrClient.GetThread(post)
 		if err != nil {
 			slog.Error(commentsErrorText, "error", err)
 			return messages.ShowErrorModalMsg{ErrorMsg: commentsErrorText}

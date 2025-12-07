@@ -7,23 +7,23 @@ import (
 )
 
 type Comment struct {
-	Author    string `json:"author"`
-	Text      string `json:"text"`
-	Points    string `json:"points"`
-	Timestamp string `json:"timestamp"`
-	Depth     int    `json:"depth"`
+	ID        string
+	Author    string
+	Text      string
+	Timestamp string
+	Depth     int
 }
 
 type Comments struct {
-	PostTitle     string    `json:"title"`
-	PostAuthor    string    `json:"author"`
-	Subreddit     string    `json:"subreddit"`
-	PostPoints    string    `json:"points"`
-	PostText      string    `json:"text"`
-	PostUrl       string    `json:"url"`
-	PostTimestamp string    `json:"timestamp"`
-	Expiry        time.Time `json:"expiry"`
-	Comments      []Comment `json:"comments"`
+	PostID        string
+	PostTitle     string
+	PostAuthor    string
+	Community     string
+	PostText      string
+	PostUrl       string
+	PostTimestamp string
+	Expiry        time.Time
+	Comments      []Comment
 }
 
 func (c Comment) Title() string {
@@ -31,7 +31,7 @@ func (c Comment) Title() string {
 }
 
 func (c Comment) Description() string {
-	desc := fmt.Sprintf("%s  by %s  %s", c.Points, c.Author, c.Timestamp)
+	desc := fmt.Sprintf("by %s  %s", c.Author, c.Timestamp)
 	return formatDepth(desc, c.Depth)
 }
 

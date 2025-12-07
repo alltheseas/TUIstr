@@ -1,10 +1,8 @@
 package posts
 
 import (
-	"fmt"
 	"log/slog"
 	"reddittui/client"
-	"reddittui/client/common"
 	"reddittui/components/messages"
 	"reddittui/components/styles"
 	"reddittui/model"
@@ -15,16 +13,15 @@ import (
 )
 
 const (
-	defaultHeaderTitle       = "reddit.com"
-	defaultHeaderDescription = "The front page of the internet"
+	defaultHeaderTitle       = "open communities"
+	defaultHeaderDescription = "Featured Nostr communities (kind:1111)"
 	postsErrorText           = "Could not load posts. Please try again in a few moments."
-	subredditNotFoundText    = "Subreddit not found"
 )
 
 type PostsPage struct {
-	Subreddit      string
+	Community      string
 	posts          model.Posts
-	redditClient   client.RedditClient
+	nostrClient    *client.NostrClient
 	header         PostsHeader
 	list           list.Model
 	focus          bool
@@ -32,7 +29,7 @@ type PostsPage struct {
 	containerStyle lipgloss.Style
 }
 
-func NewPostsPage(redditClient client.RedditClient, home bool) PostsPage {
+func NewPostsPage(nostrClient *client.NostrClient, home bool) PostsPage {
 	items := list.New(nil, NewPostsDelegate(), 0, 0)
 	items.SetShowTitle(false)
 	items.SetShowStatusBar(false)
@@ -51,7 +48,7 @@ func NewPostsPage(redditClient client.RedditClient, home bool) PostsPage {
 
 	return PostsPage{
 		list:           items,
-		redditClient:   redditClient,
+		nostrClient:    nostrClient,
 		header:         header,
 		Home:           home,
 		containerStyle: containerStyle,
@@ -84,10 +81,10 @@ func (p PostsPage) handleGlobalMessages(msg tea.Msg) (PostsPage, tea.Cmd) {
 			return p, p.loadHome()
 		}
 
-	case messages.LoadSubredditMsg:
+	case messages.LoadCommunityMsg:
 		if !p.Home {
-			subreddit := string(msg)
-			return p, p.loadSubreddit(subreddit)
+			community := string(msg)
+			return p, p.loadCommunity(community)
 		}
 
 	case messages.LoadMorePostsMsg:
@@ -121,7 +118,7 @@ func (p PostsPage) handleFocusedMessages(msg tea.Msg) (PostsPage, tea.Cmd) {
 		case "enter", "right", "l":
 			loadCommentsCmd := func() tea.Msg {
 				post := p.posts.Posts[p.list.Index()]
-				return messages.LoadCommentsMsg(post.CommentsUrl)
+				return messages.LoadThreadMsg(post)
 			}
 
 			return p, loadCommentsCmd
@@ -186,7 +183,7 @@ func (p *PostsPage) resizeComponents() {
 
 func (p *PostsPage) loadHome() tea.Cmd {
 	return func() tea.Msg {
-		posts, err := p.redditClient.GetHomePosts("")
+		posts, err := p.nostrClient.GetFeaturedPosts("")
 		if err != nil {
 			slog.Error(postsErrorText, "error", err)
 			return messages.ShowErrorModalMsg{ErrorMsg: postsErrorText}
@@ -209,9 +206,9 @@ func (p *PostsPage) loadMorePosts() tea.Cmd {
 		}
 
 		if p.posts.IsHome {
-			posts, err = p.redditClient.GetHomePosts(p.posts.After)
+			posts, err = p.nostrClient.GetFeaturedPosts(p.posts.After)
 		} else {
-			posts, err = p.redditClient.GetSubredditPosts(p.Subreddit, p.posts.After)
+			posts, err = p.nostrClient.GetCommunityPosts(p.Community, p.posts.After)
 		}
 
 		if err != nil {
@@ -223,13 +220,10 @@ func (p *PostsPage) loadMorePosts() tea.Cmd {
 	}
 }
 
-func (p PostsPage) loadSubreddit(subreddit string) tea.Cmd {
+func (p PostsPage) loadCommunity(community string) tea.Cmd {
 	return func() tea.Msg {
-		posts, err := p.redditClient.GetSubredditPosts(subreddit, "")
-		if err == common.ErrNotFound {
-			slog.Error(subredditNotFoundText, "error", err, "subreddit", subreddit)
-			return messages.ShowErrorModalMsg{ErrorMsg: fmt.Sprintf("%s: %s", subredditNotFoundText, subreddit)}
-		} else if err != nil {
+		posts, err := p.nostrClient.GetCommunityPosts(community, "")
+		if err != nil {
 			slog.Error(postsErrorText, "error", err)
 			return messages.ShowErrorModalMsg{ErrorMsg: postsErrorText}
 		}
@@ -244,8 +238,8 @@ func (p *PostsPage) updatePosts(posts model.Posts) {
 	if posts.IsHome {
 		p.header.SetContent(defaultHeaderTitle, defaultHeaderDescription)
 	} else {
-		p.header.SetContent(posts.Subreddit, posts.Description)
-		p.Subreddit = posts.Subreddit
+		p.header.SetContent(posts.Community, posts.Description)
+		p.Community = posts.Community
 	}
 
 	p.list.ResetSelected()
@@ -261,7 +255,7 @@ func (p *PostsPage) updatePosts(posts model.Posts) {
 }
 
 func (p *PostsPage) addPosts(posts model.Posts) {
-	uniqueTitles := make(map[string]bool)
+	uniqueIds := make(map[string]bool)
 
 	p.posts.Posts = append(p.posts.Posts, posts.Posts...)
 	p.posts.After = posts.After
@@ -269,15 +263,15 @@ func (p *PostsPage) addPosts(posts model.Posts) {
 	// Merge existing posts with new posts, avoiding duplicates
 	var listItems []list.Item
 	for _, p := range p.posts.Posts {
-		if _, ok := uniqueTitles[p.PostTitle]; !ok {
+		if _, ok := uniqueIds[p.ID]; !ok {
 			listItems = append(listItems, p)
-			uniqueTitles[p.PostTitle] = true
+			uniqueIds[p.ID] = true
 		}
 	}
 	for _, p := range posts.Posts {
-		if _, ok := uniqueTitles[p.PostTitle]; !ok {
+		if _, ok := uniqueIds[p.ID]; !ok {
 			listItems = append(listItems, p)
-			uniqueTitles[p.PostTitle] = true
+			uniqueIds[p.ID] = true
 		}
 	}
 

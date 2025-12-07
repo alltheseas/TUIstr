@@ -1,21 +1,13 @@
 package utils
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
-func TestNormalizeSubreddit(t *testing.T) {
-	tests := []struct {
-		subreddit string
-		want      string
-	}{
-		{"neovim", "r/neovim"},
-		{"r/neovim", "r/neovim"},
-	}
-
-	for _, tt := range tests {
-		got := NormalizeSubreddit(tt.subreddit)
-		if got != tt.want {
-			t.Errorf("got %s, want %s", got, tt.want)
-		}
+func TestNormalizeCommunity(t *testing.T) {
+	if got := NormalizeCommunity("t:nostr"); got != "t:nostr" {
+		t.Fatalf("expected passthrough community id, got %s", got)
 	}
 }
 
@@ -83,5 +75,27 @@ func TestGetSingularPlural(t *testing.T) {
 		if got != tt.want {
 			t.Errorf("got %s, want %s with input: s %s, singular %s, plural %s", got, tt.want, tt.s, tt.singular, tt.plural)
 		}
+	}
+}
+
+func TestFriendlyTime(t *testing.T) {
+	now := time.Now()
+	if out := FriendlyTime(now.Add(-30 * time.Second)); out != "just now" {
+		t.Fatalf("expected 'just now', got %s", out)
+	}
+	if out := FriendlyTime(now.Add(-2 * time.Hour)); out == "" || out == "just now" {
+		t.Fatalf("expected friendly hours string, got %s", out)
+	}
+}
+
+func TestShortenPubKey(t *testing.T) {
+	short := ShortenPubKey("abcdef")
+	if short != "abcdef" {
+		t.Fatalf("expected unchanged short key, got %s", short)
+	}
+
+	long := ShortenPubKey("abcdef0123456789")
+	if long == "abcdef0123456789" {
+		t.Fatalf("expected shortened key, got %s", long)
 	}
 }

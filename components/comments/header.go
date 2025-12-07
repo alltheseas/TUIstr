@@ -5,7 +5,6 @@ import (
 	"reddittui/components/colors"
 	"reddittui/model"
 	"reddittui/utils"
-	"strconv"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -30,8 +29,7 @@ type CommentsHeader struct {
 	Description      string
 	Author           string
 	Timestamp        string
-	Points           string
-	TotalComments    int
+	Community        string
 	W                int
 }
 
@@ -48,24 +46,15 @@ func (h CommentsHeader) View() string {
 	titleView := titleStyle.Render(utils.TruncateString(h.Title, h.W))
 	descriptionView := h.DescriptionStyle.Render(h.Description)
 
-	authorView := postAuthorStyle.Render(h.Author)
-	timestampView := postTimestampStyle.Render(fmt.Sprintf("submitted %s by", h.Timestamp))
-	authorTimestampView := fmt.Sprintf("%s %s", timestampView, authorView)
-
-	postPointsView := postPointsStyle.Render(utils.GetSingularPlural(h.Points, "point", "points"))
-	totalCommentsView := totalCommentsStyle.Render(utils.GetSingularPlural(strconv.Itoa(h.TotalComments), "comment", "comments"))
-	pointsAndCommentsView := fmt.Sprintf("%s • %s", postPointsView, totalCommentsView)
-
-	joinedView := lipgloss.JoinVertical(lipgloss.Left, titleView, descriptionView, authorTimestampView, pointsAndCommentsView)
+	meta := fmt.Sprintf("%s • %s", postAuthorStyle.Render(h.Author), postTimestampStyle.Render(h.Timestamp))
+	joinedView := lipgloss.JoinVertical(lipgloss.Left, titleView, descriptionView, meta)
 
 	return headerContainerStyle.Render(joinedView)
 }
 
 func (h *CommentsHeader) SetContent(comments model.Comments) {
-	h.Title = utils.NormalizeSubreddit(comments.Subreddit)
+	h.Title = utils.NormalizeCommunity(comments.Community)
 	h.Description = comments.PostTitle
 	h.Author = comments.PostAuthor
-	h.TotalComments = len(comments.Comments)
 	h.Timestamp = comments.PostTimestamp
-	h.Points = comments.PostPoints
 }

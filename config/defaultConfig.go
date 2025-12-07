@@ -2,23 +2,18 @@ package config
 
 const defaultConfiguration = `
 #
-# Default configuration for reddittui.
-# Uncomment to configure
-#
+# Default configuration for the Nostr communities TUI.
+# Uncomment to customize.
 
-#[core]
-#bypassCache = false
+[core]
 #logLevel = "Warn"
 
-#[filter]
-#keywords = ["drama"]
-#subreddits = ["news", "politics"]
-
-#[client]
+[nostr]
+#relays = ["wss://relay.damus.io", "wss://nos.lol", "wss://relay.snort.social"]
 #timeoutSeconds = 10
-#cacheTtlSeconds = 3600
+#limit = 50
 
-#[server]
-#domain = "old.reddit.com"
-#type = "old"
+[communities]
+#featured = ["t:nostr", "t:bitcoin", "t:linux"]
+#default = "t:nostr"
 `
