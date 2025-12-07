@@ -11,6 +11,7 @@ type Post struct {
 	PostTitle    string
 	Content      string
 	Author       string
+	PubKey       string
 	Community    string
 	FriendlyDate string
 	CreatedAt    time.Time

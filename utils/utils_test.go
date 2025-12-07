@@ -6,8 +6,8 @@ import (
 )
 
 func TestNormalizeCommunity(t *testing.T) {
-	if got := NormalizeCommunity("t:nostr"); got != "t:nostr" {
-		t.Fatalf("expected passthrough community id, got %s", got)
+	if got := NormalizeCommunity(" T:NoStr "); got != "t:nostr" {
+		t.Fatalf("expected normalized community id, got %s", got)
 	}
 }
 
@@ -29,6 +29,28 @@ func TestTruncateString(t *testing.T) {
 		if got != tt.want {
 			t.Errorf("got %s, want %s with input %s", got, tt.want, tt.s)
 		}
+	}
+}
+
+func TestValidateTopic(t *testing.T) {
+	valid := []string{"t:nostr", "t:linux", "t:city:nyc", "t:go-lang", "t:foo_bar"}
+	for _, c := range valid {
+		if !ValidateTopic(c) {
+			t.Fatalf("expected valid topic for %s", c)
+		}
+	}
+
+	invalid := []string{"", "nostr", "u:wss://relay", "t:", "t:!", "t: space", "t:ä"}
+	for _, c := range invalid {
+		if ValidateTopic(c) {
+			t.Fatalf("expected invalid topic for %s", c)
+		}
+	}
+}
+
+func TestCopyToClipboardEmpty(t *testing.T) {
+	if err := CopyToClipboard(""); err == nil {
+		t.Fatalf("expected error copying empty text")
 	}
 }
 

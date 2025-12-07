@@ -19,6 +19,7 @@ type CommentsPage struct {
 	pager          CommentsViewport
 	containerStyle lipgloss.Style
 	postUrl        string
+	currentPost    model.Post
 	focus          bool
 }
 
@@ -57,6 +58,7 @@ func (c CommentsPage) handleGlobalMessages(msg tea.Msg) (CommentsPage, tea.Cmd) 
 	switch msg := msg.(type) {
 	case messages.LoadThreadMsg:
 		post := model.Post(msg)
+		c.currentPost = post
 		return c, c.loadThread(post)
 	case messages.UpdateCommentsMsg:
 		c.updateComments(model.Comments(msg))
@@ -72,6 +74,18 @@ func (c CommentsPage) handleFocusedMessages(msg tea.Msg) (CommentsPage, tea.Cmd)
 		switch keypress := msg.String(); keypress {
 		case "H":
 			return c, messages.LoadHome
+
+		case "r":
+			if c.currentPost.ID != "" {
+				return c, messages.ShowReplyModal(c.currentPost)
+			}
+
+		case "y":
+			if c.currentPost.ID != "" {
+				return c, func() tea.Msg {
+					return messages.CopyNeventMsg{Post: c.currentPost}
+				}
+			}
 
 		case "escape", "backspace", "left", "h":
 			return c, messages.GoBack
@@ -134,6 +148,12 @@ func (c *CommentsPage) updateComments(comments model.Comments) {
 	c.header.SetContent(comments)
 	c.pager.SetContent(comments)
 	c.postUrl = comments.PostUrl
+	if c.currentPost.ID == "" {
+		c.currentPost.ID = comments.PostID
+	}
+	c.currentPost.PostTitle = comments.PostTitle
+	c.currentPost.PostUrl = comments.PostUrl
+	c.currentPost.Community = comments.Community
 
 	// Need to resize components when content loads so padding and margins are correct
 	c.resizeComponents()
