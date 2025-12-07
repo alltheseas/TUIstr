@@ -3,6 +3,7 @@ package modal
 import (
 	"reddittui/components/colors"
 	"reddittui/components/messages"
+	"reddittui/model"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -17,6 +18,7 @@ const (
 	searching
 	quitting
 	showingError
+	composing
 )
 
 var modalStyle = lipgloss.NewStyle().
@@ -30,6 +32,7 @@ type ModalManager struct {
 	search     CommunitySearchModal
 	spinner    SpinnerModal
 	errorModal ErrorModal
+	composer   ComposeModal
 	state      SessionState
 	style      lipgloss.Style
 	onClose    tea.Cmd
@@ -41,6 +44,7 @@ func NewModalManager() ModalManager {
 		search:     NewCommunitySearchModal(),
 		spinner:    NewSpinnerModal(),
 		errorModal: NewErrorModal(),
+		composer:   NewComposeModal(),
 		style:      modalStyle,
 	}
 }
@@ -79,11 +83,14 @@ func (m ModalManager) handleGlobalMessages(msg tea.Msg) (ModalManager, tea.Cmd) 
 		return m, m.SetErrorWithCallback(msg.ErrorMsg, msg.OnClose)
 
 	case tea.KeyMsg:
+		if m.state != defaultState {
+			// While a modal is open (loading/searching/composing/error/quit), ignore global shortcuts.
+			return m, nil
+		}
+
 		switch msg.String() {
 		case "esc", "q":
-			if m.state == defaultState {
-				return m, m.SetQuitting()
-			}
+			return m, m.SetQuitting()
 		case "s", "S":
 			return m, m.SetSearching()
 		}
@@ -108,6 +115,9 @@ func (m ModalManager) handleFocusedMessages(msg tea.Msg) (ModalManager, tea.Cmd)
 	case showingError:
 		m.errorModal, cmd = m.errorModal.Update(msg)
 		return m, cmd
+	case composing:
+		m.composer, cmd = m.composer.Update(msg)
+		return m, cmd
 	default:
 		return m, nil
 	}
@@ -123,6 +133,8 @@ func (m ModalManager) View(background Viewer) string {
 		return PlaceModal(m.search, background, lipgloss.Center, lipgloss.Center, m.style)
 	case showingError:
 		return PlaceModal(m.errorModal, background, lipgloss.Center, lipgloss.Center, m.style)
+	case composing:
+		return PlaceModal(m.composer, background, lipgloss.Center, lipgloss.Center, m.style)
 	default:
 		// This sometimes happens when loading completes before the loading modal finishes rendering
 		return ""
@@ -131,6 +143,7 @@ func (m ModalManager) View(background Viewer) string {
 
 func (m *ModalManager) SetSize(w, h int) {
 	m.search.SetSize(w, h)
+	m.composer.SetSize(w, h)
 
 	modalSize := int((float64(w) * (2)) / 3.0)
 	m.style = m.style.MaxWidth(modalSize)
@@ -139,6 +152,7 @@ func (m *ModalManager) SetSize(w, h int) {
 func (m *ModalManager) Blur() tea.Cmd {
 	m.state = defaultState
 	m.search.Blur()
+	m.composer.Blur()
 
 	onClose := m.onClose
 	m.onClose = nil
@@ -172,5 +186,19 @@ func (m *ModalManager) SetErrorWithCallback(errorMsg string, onClose tea.Cmd) te
 	m.state = showingError
 	m.onClose = onClose
 	m.errorModal.ErrorMsg = errorMsg
+	return messages.OpenModal
+}
+
+func (m *ModalManager) SetComposePost(community string) tea.Cmd {
+	m.state = composing
+	m.composer.SetPostContext(community)
+	m.composer.Focus()
+	return messages.OpenModal
+}
+
+func (m *ModalManager) SetComposeReply(post model.Post) tea.Cmd {
+	m.state = composing
+	m.composer.SetReplyContext(post)
+	m.composer.Focus()
 	return messages.OpenModal
 }

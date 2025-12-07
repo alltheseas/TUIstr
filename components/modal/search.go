@@ -1,8 +1,10 @@
 package modal
 
 import (
+	"fmt"
 	"reddittui/components/colors"
 	"reddittui/components/messages"
+	"reddittui/utils"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -31,6 +33,15 @@ func NewCommunitySearchModal() CommunitySearchModal {
 	searchTextInput.ShowSuggestions = true
 	searchTextInput.SetSuggestions(communitySuggestions)
 	searchTextInput.CharLimit = 30
+	searchTextInput.Validate = func(s string) error {
+		if s == "" {
+			return nil
+		}
+		if !utils.ValidateTopic(s) {
+			return fmt.Errorf("enter a topic id like t:linux")
+		}
+		return nil
+	}
 
 	return CommunitySearchModal{
 		Model: searchTextInput,
@@ -47,6 +58,11 @@ func (s CommunitySearchModal) Update(msg tea.Msg) (CommunitySearchModal, tea.Cmd
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
+			if err := s.Validate(s.Value()); err != nil {
+				s.Model.Err = err
+				return s, nil
+			}
+			s.Model.Err = nil
 			return s, messages.LoadCommunity(s.Value())
 		case "esc":
 			return s, messages.ExitModal
@@ -61,7 +77,11 @@ func (s CommunitySearchModal) Update(msg tea.Msg) (CommunitySearchModal, tea.Cmd
 func (s CommunitySearchModal) View() string {
 	titleView := searchHelpStyle.Render(searchHelpText)
 	modelView := searchModelStyle.Render(s.Model.View())
-	joined := lipgloss.JoinVertical(lipgloss.Left, titleView, modelView)
+	var errorView string
+	if s.Model.Err != nil {
+		errorView = lipgloss.NewStyle().Foreground(colors.AdaptiveColor(colors.Red)).Render(s.Model.Err.Error())
+	}
+	joined := lipgloss.JoinVertical(lipgloss.Left, titleView, modelView, errorView)
 	return s.style.Render(joined)
 }
 
