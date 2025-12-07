@@ -1,4 +1,4 @@
-# Communities TUI (Nostr)
+# TUIstr (Nostr communities)
 
 A lightweight terminal client for browsing open Nostr communities (kind `1111` posts with NIP-73 identifiers) and their NIP-22 comment threads. Built with [Bubble Tea](https://github.com/charmbracelet/bubbletea) and powered by [go-nostr](https://github.com/nbd-wtf/go-nostr).
 
@@ -13,8 +13,8 @@ A lightweight terminal client for browsing open Nostr communities (kind `1111` p
 ## Installation
 
 ```bash
-git clone https://github.com/tonymajestro/reddit-tui.git communities-tui
-cd communities-tui/reddit-tui
+git clone https://github.com/tonymajestro/TUIstr.git tuistr
+cd tuistr
 ./install.sh
 ```
 
@@ -28,13 +28,13 @@ To remove the binary:
 
 ```bash
 # Open the featured communities feed
-communities-tui
+tuistr
 
 # Jump to a specific community (NIP-73 id)
-communities-tui --community t:linux
+tuistr --community t:linux
 
 # Open a specific event by ID (kind 1111)
-communities-tui --event <event_id>
+tuistr --event <event_id>
 ```
 
 ## Keybindings
@@ -52,7 +52,7 @@ communities-tui --event <event_id>
 
 ## Configuration
 
-On first run, a config is created at `~/.config/communities-tui/communities.toml`:
+On first run, a config is created at `~/.config/tuistr/communities.toml`:
 
 ```toml
 [core]
@@ -78,4 +78,4 @@ default = "t:nostr"
 
 ## Notes
 - No Reddit APIs or email logins remain—everything is fetched from Nostr relays via go-nostr.
-- Kind `1111` post URLs are rendered as `https://njump.me/<nevent>` for easy sharing/opening.
+- Kind `1111` post URLs are rendered as `https://nostr.eu/<nevent>` for easy sharing/opening.

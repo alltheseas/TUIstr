@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"reddittui/utils"
+	"tuistr/utils"
 
 	"github.com/BurntSushi/toml"
 )

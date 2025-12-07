@@ -1,4 +1,4 @@
-module reddittui
+module tuistr
 
 go 1.24.1
 

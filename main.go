@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"reddittui/components"
-	"reddittui/config"
-	"reddittui/utils"
+	"tuistr/components"
+	"tuistr/config"
+	"tuistr/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -37,20 +37,20 @@ func main() {
 	flag.Parse()
 
 	if args.showVersion {
-		fmt.Printf("communities-tui version %s\n", version)
+		fmt.Printf("tuistr version %s\n", version)
 		os.Exit(0)
 	}
 
 	communities, err := components.NewCommunitiesTui(configuration, args.community, args.postId)
 	if err != nil {
-		slog.Error("Error initializing communities tui", "error", err)
+		slog.Error("Error initializing tuistr", "error", err)
 		os.Exit(1)
 	}
 
 	p := tea.NewProgram(communities, tea.WithAltScreen())
 
 	if _, err := p.Run(); err != nil {
-		slog.Error("Error running communities tui, see logfile for details", "error", err)
+		slog.Error("Error running tuistr, see logfile for details", "error", err)
 		os.Exit(1)
 	}
 }

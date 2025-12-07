@@ -8,11 +8,11 @@ test:
 
 clean:
   rm -rf build/
-  rm -rf ~/.cache/communities-tui/*
-  rm -rf ~/.local/state/communities-tui/*
+  rm -rf ~/.cache/tuistr/*
+  rm -rf ~/.local/state/tuistr/*
 
 build:
-  @echo "Building communities-tui..."
+  @echo "Building tuistr..."
 
   @echo "Creating build directory at build/..."
   mkdir -p build
@@ -20,17 +20,17 @@ build:
   @echo "Installing dependencies..."
   go mod tidy
 
-  @echo "Building communities-tui application..."
-  go build -o build/communities-tui main.go
+  @echo "Building tuistr application..."
+  go build -o build/tuistr main.go
 
   @echo "Build complete."
 
 install: build
-  @echo "Installing communities-tui..."
+  @echo "Installing tuistr..."
   ./install.sh
   @echo "Installation complete."
 
 uninstall: clean
-  @echo "Cleaning communities-tui..."
-  sudo rm -f /usr/local/bin/communities-tui
+  @echo "Cleaning tuistr..."
+  sudo rm -f /usr/local/bin/tuistr
   @echo "Clean complete"

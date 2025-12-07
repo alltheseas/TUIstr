@@ -1,8 +1,8 @@
 package posts
 
 import (
-	"reddittui/components/colors"
-	"reddittui/utils"
+	"tuistr/components/colors"
+	"tuistr/utils"
 
 	"github.com/charmbracelet/lipgloss"
 )

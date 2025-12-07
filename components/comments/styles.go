@@ -1,7 +1,7 @@
 package comments
 
 import (
-	"reddittui/components/colors"
+	"tuistr/components/colors"
 
 	"github.com/charmbracelet/lipgloss"
 )

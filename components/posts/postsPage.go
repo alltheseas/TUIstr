@@ -3,12 +3,12 @@ package posts
 import (
 	"fmt"
 	"log/slog"
-	"reddittui/client"
-	"reddittui/components/messages"
-	"reddittui/components/styles"
-	"reddittui/model"
-	"reddittui/utils"
 	"strings"
+	"tuistr/client"
+	"tuistr/components/messages"
+	"tuistr/components/styles"
+	"tuistr/model"
+	"tuistr/utils"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"

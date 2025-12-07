@@ -2,9 +2,9 @@ package modal
 
 import (
 	"fmt"
-	"reddittui/components/colors"
-	"reddittui/components/messages"
-	"reddittui/utils"
+	"tuistr/components/colors"
+	"tuistr/components/messages"
+	"tuistr/utils"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"

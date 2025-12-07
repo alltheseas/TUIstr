@@ -3,14 +3,14 @@ package components
 import (
 	"fmt"
 	"log/slog"
-	"reddittui/client"
-	"reddittui/components/comments"
-	"reddittui/components/messages"
-	"reddittui/components/modal"
-	"reddittui/components/posts"
-	"reddittui/config"
-	"reddittui/model"
-	"reddittui/utils"
+	"tuistr/client"
+	"tuistr/components/comments"
+	"tuistr/components/messages"
+	"tuistr/components/modal"
+	"tuistr/components/posts"
+	"tuistr/config"
+	"tuistr/model"
+	"tuistr/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -101,7 +101,7 @@ func (r CommunitiesTui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if r.initializing && msg.OnClose == nil {
 			slog.Error("Error during initialization")
 			if r.loadingPage == HomePage {
-				errorMsg := "Could not initialize communities tui. Check the logfile for details."
+				errorMsg := "Could not initialize tuistr. Check the logfile for details."
 				return r, messages.ShowErrorModalWithCallback(errorMsg, tea.Quit)
 			}
 
