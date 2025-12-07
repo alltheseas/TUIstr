@@ -9,6 +9,7 @@ import (
 	"reddittui/components/modal"
 	"reddittui/components/posts"
 	"reddittui/config"
+	"reddittui/model"
 	"reddittui/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -166,6 +167,56 @@ func (r CommunitiesTui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd = r.modalManager.SetLoading("loading thread...")
 		cmds = append(cmds, cmd)
 
+	case messages.ShowComposePostMsg:
+		r.focusModal()
+		return r, r.modalManager.SetComposePost(msg.Community)
+
+	case messages.ShowReplyModalMsg:
+		r.focusModal()
+		return r, r.modalManager.SetComposeReply(model.Post(msg))
+
+	case messages.SubmitPostMsg:
+		r.focusModal()
+		r.loadingPage = r.page
+		cmds = append(cmds, r.modalManager.SetLoading("publishing post..."), publishPost(r.nostrClient, msg))
+		return r, tea.Batch(cmds...)
+
+	case messages.SubmitReplyMsg:
+		r.focusModal()
+		r.loadingPage = CommentsPage
+		cmds = append(cmds, r.modalManager.SetLoading("publishing reply..."), publishReply(r.nostrClient, msg))
+		return r, tea.Batch(cmds...)
+
+	case messages.PostPublishedMsg:
+		r.popup = false
+		cmds = append(cmds, r.modalManager.Blur())
+		target := utils.NormalizeCommunity(model.Post(msg).Community)
+		if target != "" {
+			cmds = append(cmds, messages.LoadCommunity(target))
+		} else {
+			cmds = append(cmds, messages.LoadHome)
+		}
+		return r, tea.Batch(cmds...)
+
+	case messages.ReplyPublishedMsg:
+		r.popup = false
+		cmds = append(cmds, r.modalManager.Blur(), messages.LoadThread(model.Post(msg.Post)))
+		return r, tea.Batch(cmds...)
+
+	case messages.PublishErrorMsg:
+		return r, r.modalManager.SetError(msg.ErrorMsg)
+
+	case messages.CopyNeventMsg:
+		nevent, err := r.nostrClient.EncodeNevent(msg.Post)
+		if err != nil {
+			return r, r.modalManager.SetError(err.Error())
+		}
+		if err := utils.CopyToClipboard(nevent); err != nil {
+			return r, r.modalManager.SetError(fmt.Sprintf("Could not copy nevent: %v", err))
+		}
+		slog.Info("copied nevent", "id", msg.Post.ID)
+		return r, nil
+
 	case messages.OpenUrlMsg:
 		url := string(msg)
 		if err := utils.OpenUrl(url); err != nil {
@@ -275,5 +326,25 @@ func (r *CommunitiesTui) focusActivePage() {
 		r.homePage.Blur()
 		r.communityPage.Blur()
 		r.commentsPage.Focus()
+	}
+}
+
+func publishPost(client *client.NostrClient, msg messages.SubmitPostMsg) tea.Cmd {
+	return func() tea.Msg {
+		post, err := client.PublishPost(msg.Community, msg.Content)
+		if err != nil {
+			return messages.PublishErrorMsg{ErrorMsg: err.Error()}
+		}
+		return messages.PostPublishedMsg(post)
+	}
+}
+
+func publishReply(client *client.NostrClient, msg messages.SubmitReplyMsg) tea.Cmd {
+	return func() tea.Msg {
+		comment, err := client.PublishReply(msg.Post, msg.Content)
+		if err != nil {
+			return messages.PublishErrorMsg{ErrorMsg: err.Error()}
+		}
+		return messages.ReplyPublishedMsg{Post: msg.Post, Comment: comment}
 	}
 }

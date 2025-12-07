@@ -27,6 +27,7 @@ type NostrConfig struct {
 	Relays         []string
 	TimeoutSeconds int
 	Limit          int
+	SecretKey      string
 }
 
 type CommunitiesConfig struct {
@@ -43,10 +44,11 @@ func NewConfig() Config {
 			Relays:         []string{"wss://relay.damus.io", "wss://nos.lol", "wss://relay.snort.social"},
 			TimeoutSeconds: 10,
 			Limit:          50,
+			SecretKey:      "",
 		},
 		Communities: CommunitiesConfig{
-			Featured: []string{"t:nostr", "t:bitcoin", "t:linux"},
-			Default:  "t:nostr",
+			Featured: []string{"t:nostr", "t:farmstr", "t:foodstr"},
+			Default:  "",
 		},
 	}
 }
@@ -106,6 +108,10 @@ func mergeConfig(left, right Config, meta toml.MetaData) Config {
 
 	if meta.IsDefined("nostr", "limit") {
 		left.Nostr.Limit = right.Nostr.Limit
+	}
+
+	if meta.IsDefined("nostr", "secretKey") {
+		left.Nostr.SecretKey = right.Nostr.SecretKey
 	}
 
 	if meta.IsDefined("communities", "featured") {

@@ -21,6 +21,29 @@ type (
 	UpdatePostsMsg     model.Posts
 	AddMorePostsMsg    model.Posts
 	LoadingCompleteMsg struct{}
+	ShowComposePostMsg struct {
+		Community string
+	}
+	ShowReplyModalMsg model.Post
+	SubmitPostMsg     struct {
+		Community string
+		Content   string
+	}
+	SubmitReplyMsg struct {
+		Post    model.Post
+		Content string
+	}
+	PostPublishedMsg  model.Post
+	ReplyPublishedMsg struct {
+		Post    model.Post
+		Comment model.Comment
+	}
+	PublishErrorMsg struct {
+		ErrorMsg string
+	}
+	CopyNeventMsg struct {
+		Post model.Post
+	}
 
 	OpenModalMsg        struct{}
 	ExitModalMsg        struct{}
@@ -54,6 +77,18 @@ func LoadCommunity(community string) tea.Cmd {
 func LoadThread(post model.Post) tea.Cmd {
 	return func() tea.Msg {
 		return LoadThreadMsg(post)
+	}
+}
+
+func ShowComposePost(community string) tea.Cmd {
+	return func() tea.Msg {
+		return ShowComposePostMsg{Community: community}
+	}
+}
+
+func ShowReplyModal(post model.Post) tea.Cmd {
+	return func() tea.Msg {
+		return ShowReplyModalMsg(post)
 	}
 }
 

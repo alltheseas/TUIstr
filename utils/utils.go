@@ -1,12 +1,18 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
+	"os"
+	"regexp"
+	"strings"
 	"time"
+
+	"github.com/atotto/clipboard"
 )
 
 func NormalizeCommunity(community string) string {
-	return community
+	return strings.TrimSpace(strings.ToLower(community))
 }
 
 func TruncateString(s string, w int) string {
@@ -63,4 +69,24 @@ func ShortenPubKey(pk string) string {
 	}
 
 	return fmt.Sprintf("%s...%s", pk[:6], pk[len(pk)-4:])
+}
+
+var topicRegexp = regexp.MustCompile(`^t:[a-z0-9][a-z0-9:_-]*$`)
+
+// ValidateTopic ensures we only allow topic-style NIP-73 ids for now.
+func ValidateTopic(community string) bool {
+	community = NormalizeCommunity(community)
+	return topicRegexp.MatchString(community)
+}
+
+// CopyToClipboard writes text to the system clipboard.
+func CopyToClipboard(text string) error {
+	if strings.TrimSpace(text) == "" {
+		return errors.New("cannot copy empty text")
+	}
+	// CI and some terminals lack clipboards; allow opt-out via env.
+	if os.Getenv("NO_CLIPBOARD") != "" {
+		return errors.New("clipboard disabled via NO_CLIPBOARD")
+	}
+	return clipboard.WriteAll(text)
 }

@@ -1,11 +1,14 @@
 package posts
 
 import (
+	"fmt"
 	"log/slog"
 	"reddittui/client"
 	"reddittui/components/messages"
 	"reddittui/components/styles"
 	"reddittui/model"
+	"reddittui/utils"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -116,12 +119,13 @@ func (p PostsPage) handleFocusedMessages(msg tea.Msg) (PostsPage, tea.Cmd) {
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
 		case "enter", "right", "l":
-			loadCommentsCmd := func() tea.Msg {
-				post := p.posts.Posts[p.list.Index()]
+			if len(p.posts.Posts) == 0 {
+				return p, nil
+			}
+			post := p.posts.Posts[p.list.Index()]
+			return p, func() tea.Msg {
 				return messages.LoadThreadMsg(post)
 			}
-
-			return p, loadCommentsCmd
 
 		case "q", "Q":
 			// Ignore q keystrokes to list.Modal. since it will default to sending a Quit message
@@ -134,6 +138,23 @@ func (p PostsPage) handleFocusedMessages(msg tea.Msg) (PostsPage, tea.Cmd) {
 		case "H":
 			return p, messages.LoadHome
 
+		case "n":
+			return p, func() tea.Msg {
+				community := p.Community
+				if p.Home {
+					community = ""
+				}
+				return messages.ShowComposePostMsg{Community: community}
+			}
+		case "y":
+			if len(p.posts.Posts) == 0 {
+				return p, nil
+			}
+			post := p.posts.Posts[p.list.Index()]
+			return p, func() tea.Msg {
+				return messages.CopyNeventMsg{Post: post}
+			}
+
 		case "esc", "backspace", "left", "h":
 			return p, messages.GoBack
 		}
@@ -145,12 +166,19 @@ func (p PostsPage) handleFocusedMessages(msg tea.Msg) (PostsPage, tea.Cmd) {
 }
 
 func (p PostsPage) View() string {
-	if len(p.posts.Posts) == 0 {
-		return p.containerStyle.Render("")
-	}
-
 	headerView := p.header.View()
 	listView := p.list.View()
+	if len(p.posts.Posts) == 0 {
+		placeholder := "No posts yet."
+		community := strings.TrimSpace(p.Community)
+		if !p.Home && community != "" {
+			placeholder = fmt.Sprintf("No posts found for %s.", utils.NormalizeCommunity(community))
+		}
+		emptyView := lipgloss.NewStyle().Padding(1, 2).Render(placeholder)
+		joined := lipgloss.JoinVertical(lipgloss.Left, headerView, emptyView)
+		return p.containerStyle.Render(joined)
+	}
+
 	joined := lipgloss.JoinVertical(lipgloss.Left, headerView, listView)
 	return p.containerStyle.Render(joined)
 }

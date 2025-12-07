@@ -12,8 +12,9 @@ const defaultConfiguration = `
 #relays = ["wss://relay.damus.io", "wss://nos.lol", "wss://relay.snort.social"]
 #timeoutSeconds = 10
 #limit = 50
+#secretKey = ""  # nsec or hex, required to publish
 
 [communities]
-#featured = ["t:nostr", "t:bitcoin", "t:linux"]
-#default = "t:nostr"
+#featured = ["t:nostr", "t:farmstr", "t:foodstr"]
+#default = ""  # leave empty to start on the featured feed
 `
