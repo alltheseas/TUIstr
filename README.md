@@ -4,6 +4,13 @@ A lightweight terminal client for browsing open topical Nostr communities (kind 
 
 Open topical communities working spec: https://github.com/damus-io/dips/pull/2/files
 
+<img width="387" height="134" alt="image" src="https://github.com/user-attachments/assets/d4581ac2-845e-493c-8759-fa5890dc33c0" />
+
+<img width="612" height="434" alt="image" src="https://github.com/user-attachments/assets/32c6aa9b-5b83-4b4c-a20c-f7d3142883b8" />
+
+<img width="567" height="440" alt="image" src="https://github.com/user-attachments/assets/b4e22d9d-77ea-4d49-b167-d00b6d03fdf0" />
+
+
 ## Features
 - Featured feed across multiple relays and community identifiers.
 - Jump directly to a specific community (`t:`, `u:`, or `g:` NIP-73 ids).
