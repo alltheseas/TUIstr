@@ -88,3 +88,23 @@ default = "t:nostr"
 ## Notes
 - No Reddit APIs or email logins remain—everything is fetched from Nostr relays via go-nostr.
 - Kind `1111` post URLs are rendered as `https://nostr.eu/<nevent>` for easy sharing/opening.
+
+## Why aren't you using NIP-29 relay based groups?
+[NIP-29](https://github.com/nostr-protocol/nips/blob/master/29.md) is a great foundation to build a moderated discord alternative (see example implementation [flotilla](https://github.com/coracle-social/flotilla)). Open topical communities aims to solve a different problem in public townsquare forums. See a direct comparison below:
+
+| Property | NIP-29 Relay-Based Groups | Open Topical Communities (DIP) |
+|---------|----------------------------|--------------------------------|
+| **Governance model** | Admin-owned, relay-enforced | Completely ownerless; no admins |
+| **Moderation** | Admins can kick, ban, delete posts | No server-side moderation; only client filtering |
+| **Structure** | Group metadata + event kinds (`40`, `41`, etc.) | Purely tag-based: NIP-73 + NIP-22 |
+| **Posting rules** | Relay controls membership & posting | Anyone can post by using the correct `I` tag |
+| **Relay dependence** | High — requires a specific group relay | Optional — events can come from any relay |
+| **Censorship resistance** | Medium — admin/relay can censor or remove group | High — no group to censor; content exists across relays |
+| **Threading** | Group-specific event structure | Standard NIP-22 threading |
+| **Discoverability** | Join group → get group feed | Browse topics/hashtags → feed auto-aggregates |
+| **Use-case fit** | Moderated group chats, project teams | Open-topic discovery, public-square conversations |
+| **Dealing with spam** | Admin tools can remove content & ban users at the relay level | No centralized control → requires client-side spam filtering, heuristics, muting, reputation systems |
+| **UX expectation** | Structured, rule-based group | Freeform Reddit/Twitter-like topic feeds |
+| **Implementation complexity for clients** | Medium–high (new event kinds, admin flows, membership UI) | Low (reuse existing NIP-73/NIP-22) |
+| **Complexity of implementing a Reddit-style Topic UI** | Not applicable; groups are not topic feeds | Moderate — requires topic directory, trending topics, per-topic timelines, but no new protocol requirements |
+| **Community survivability** | Depends on group relay’s longevity | Very high — any relay can host posts; topics are global |
